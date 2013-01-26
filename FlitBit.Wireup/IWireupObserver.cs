@@ -1,7 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿#region COPYRIGHT© 2009-2013 Phillip Clark. All rights reserved.
+// For licensing information see License.txt (MIT style licensing).
+#endregion
+
+using System;
 using FlitBit.Wireup.Meta;
 
 namespace FlitBit.Wireup
