@@ -5,7 +5,7 @@ using System.Runtime.InteropServices;
 using System.Runtime.CompilerServices;
 
 [assembly: AssemblyTitle("FlitBit.Wireup")]
-[assembly: AssemblyDescription("Utilities for bootstrapping application and wiring up dependencies.")]
+[assembly: AssemblyDescription("Utilities for bootstrapping applications and wiring up dependencies.")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCulture("")]
 
