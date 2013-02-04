@@ -13,9 +13,10 @@ namespace FlitBit.Wireup
 	/// <summary>
 	/// Configuration element for wiring up an assembly.
 	/// </summary>
-	public class WireupConfgiurationElement : ConfigurationElement
+	public class WireupConfigurationElement : ConfigurationElement
 	{
 		const string PropertyName_assembly = "assembly";
+		const string PropertyName_ordinal = "ordinal";
 		Assembly _asm;
 
 		/// <summary>
@@ -27,7 +28,17 @@ namespace FlitBit.Wireup
 		public string AssemblyName
 		{
 			get { return (string)this[PropertyName_assembly]; }
-			set { this[WireupConfgiurationElement.PropertyName_assembly] = value; }
+			set { this[PropertyName_assembly] = value; }
+		}
+
+		/// <summary>
+		/// The ordinal; indicates the order in which assemblies are registered.
+		/// </summary>
+		[ConfigurationProperty(PropertyName_ordinal, DefaultValue = 0)]
+		public int Ordinal
+		{
+			get { return (int)this[PropertyName_ordinal]; }
+			set { this[PropertyName_ordinal] = value; }
 		}
 
 		internal Assembly ResolveAssembly

@@ -13,14 +13,14 @@ namespace FlitBit.Wireup
 	/// <summary>
 	/// Configuration element collection for wireup elements.
 	/// </summary>
-	public class WireupConfigurationElementCollection : AbstractConfigurationElementCollection<WireupConfgiurationElement, string>
+	public class WireupConfigurationElementCollection : AbstractConfigurationElementCollection<WireupConfigurationElement, string>
 	{
 		/// <summary>
 		/// Gets the element's key
 		/// </summary>
 		/// <param name="element">the element</param>
 		/// <returns>the key</returns>
-		protected override string PerformGetElementKey(WireupConfgiurationElement element)
+		protected override string PerformGetElementKey(WireupConfigurationElement element)
 		{
 			return element.AssemblyName;
 		}
@@ -38,7 +38,7 @@ namespace FlitBit.Wireup
 		internal const string SectionName = "flitbit.wireup";
 
 		/// <summary>
-		/// ??
+		/// Gets and sets the name of the configuration coordinator type.
 		/// </summary>
 		[ConfigurationProperty(WireupConfigurationSection.PropertyName_type, IsRequired = false)]
 		public String TypeName
@@ -50,7 +50,7 @@ namespace FlitBit.Wireup
 		/// <summary>
 		/// Indicates whether assemblies should be automatically wired up upon assembly load.
 		/// </summary>
-		[ConfigurationProperty(WireupConfigurationSection.PropertyName_hookAssemblyLoad, IsRequired = false)]
+		[ConfigurationProperty(WireupConfigurationSection.PropertyName_hookAssemblyLoad, DefaultValue=true)]
 		public bool HookAssemblyLoad
 		{
 			get { return (bool)this[PropertyName_hookAssemblyLoad]; }
@@ -61,7 +61,7 @@ namespace FlitBit.Wireup
 		/// Indicates whether a call to the wireup coordinator's SelfConfigure method should wireup all
 		/// running assemblies.
 		/// </summary>
-		[ConfigurationProperty(WireupConfigurationSection.PropertyName_wireupAllRunningAssemblies, IsRequired = false)]
+		[ConfigurationProperty(WireupConfigurationSection.PropertyName_wireupAllRunningAssemblies, DefaultValue=true)]
 		public bool WireupAllRunningAssemblies
 		{
 			get { return (bool)this[PropertyName_wireupAllRunningAssemblies]; }
@@ -94,5 +94,15 @@ namespace FlitBit.Wireup
 				return coordinator ?? new DefaultWireupCoordinator();
 			}
 		}
+
+        internal static WireupConfigurationSection Instance
+        {
+            get
+            {
+                WireupConfigurationSection config = ConfigurationManager.GetSection(WireupConfigurationSection.SectionName)
+                            as WireupConfigurationSection;
+                return config ?? new WireupConfigurationSection();			
+            }
+        }
 	}
 }

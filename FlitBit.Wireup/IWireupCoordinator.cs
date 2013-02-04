@@ -22,6 +22,12 @@ namespace FlitBit.Wireup
 		IEnumerable<AssemblyDependency> WireupDependencies(Assembly assembly);
 
 		/// <summary>
+		/// Called by the framework when an assembly is loaded.
+		/// </summary>
+		/// <param name="assembly"></param>
+		void NotifyAssemblyLoaded(Assembly assembly);
+
+		/// <summary>
 		/// Directly wires up a dependency (if it is not already wired).
 		/// </summary>
 		/// <param name="type"></param>
@@ -39,7 +45,7 @@ namespace FlitBit.Wireup
 		/// </summary>
 		/// <param name="observer"></param>
 		void RegisterObserver(IWireupObserver observer);
-		
+
 		/// <summary>
 		/// Unregisters an observer.
 		/// </summary>

@@ -18,7 +18,55 @@ namespace FlitBit.Wireup.Meta
 		Type[] _commands;
 
 		/// <summary>
+		/// Creates a new WireupAttribute and initializes its behavior.
+		/// </summary>
+		/// <param name="behaviors">the assembly's wireup behavior</param>
+		public WireupAttribute(WireupBehaviors behaviors)
+		{
+			Behaviors = behaviors;
+			this._commands = new Type[0];
+		}
+
+		/// <summary>
 		/// Creates a new WireupAttribute and initializes the command type.
+		/// </summary>
+		/// <param name="commandType">command type</param>
+		public WireupAttribute(Type commandType)
+		{
+			var commands = new List<Type>();
+			if (typeof(IWireupCommand).IsAssignableFrom(commandType))
+			{
+				commands.Add(commandType);
+			}
+			else
+			{
+				throw new ArgumentException(Resources.Chk_TypeMustBeAssignableToIWireupCommand);
+			}
+			this._commands = commands.ToArray();
+		}
+
+		/// <summary>
+		/// Creates a new WireupAttribute and initializes its behavior and command type.
+		/// </summary>
+		/// <param name="behaviors">the assembly's wireup behavior</param>
+		/// <param name="commandType">command type</param>
+		public WireupAttribute(WireupBehaviors behaviors, Type commandType)
+		{
+			Behaviors = behaviors;
+			var commands = new List<Type>();
+			if (typeof(IWireupCommand).IsAssignableFrom(commandType))
+			{
+				commands.Add(commandType);
+			}
+			else
+			{
+				throw new ArgumentException(Resources.Chk_TypeMustBeAssignableToIWireupCommand);
+			}
+			this._commands = commands.ToArray();
+		}
+
+		/// <summary>
+		/// Creates a new WireupAttribute and initializes its behavior and command types.
 		/// </summary>
 		/// <param name="behaviors">the assembly's wireup behavior</param>
 		/// <param name="commandTypes">command types</param>

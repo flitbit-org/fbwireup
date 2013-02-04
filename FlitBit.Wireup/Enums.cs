@@ -28,6 +28,10 @@ namespace FlitBit.Wireup
 	public enum WireupPhase
 	{
 		/// <summary>
+		/// Immediately upon discovery.
+		/// </summary>
+		Immediate = -5,
+		/// <summary>
 		/// Indicates before dependencies are resolved.
 		/// </summary>
 		BeforeDependencies = -4,

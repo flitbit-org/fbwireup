@@ -109,7 +109,7 @@
     </Compile>
     <Compile Include="AssemblyDependency.cs" />
     <Compile Include="Configuration\WireupConfigurationSection.cs" />
-    <Compile Include="Configuration\WireupElement.cs" />
+    <Compile Include="Configuration\WireupConfigurationElement.cs" />
     <Compile Include="Constants.cs" />
     <Compile Include="DefaultWireupCoordinator.cs" />
     <Compile Include="Enums.cs" />

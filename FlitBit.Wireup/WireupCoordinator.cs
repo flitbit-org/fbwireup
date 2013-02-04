@@ -3,6 +3,7 @@
 #endregion
 
 using System;
+using System.Linq;
 using System.Configuration;
 using System.Reflection;
 using System.Threading;
@@ -16,8 +17,10 @@ namespace FlitBit.Wireup
 	public static class WireupCoordinator
 	{
 		static bool __initialized;
+		static bool __reentryDetected;
+		static object __sync = new Object();
 		static readonly Lazy<IWireupCoordinator> _coordinator = new Lazy<IWireupCoordinator>(PerformBootstrapCurrentProcess, LazyThreadSafetyMode.ExecutionAndPublication);
-		static WeakReference<WireupConfigurationSection> _config;
+
 		/// <summary>
 		/// Accesses the singleton IWireupCoordinator instance.
 		/// </summary>
@@ -28,14 +31,48 @@ namespace FlitBit.Wireup
 				var coord = _coordinator.Value;
 				if (!__initialized)
 				{
-					foreach (WireupConfgiurationElement e in _config.StrongTarget.Assemblies)
+					lock (__sync)
 					{
-						e.PerformWireup(coord);
-					}
-					// in case there is no config; make sure this assembly is whole...
-					coord.WireupDependencies(Assembly.GetExecutingAssembly());
+						if (!__initialized)
+						{
+							if (!__reentryDetected)
+							{
+								try
+								{
+									__reentryDetected = true;
 
-					__initialized = true;
+									// in case there is no config; make sure this assembly is whole...
+									coord.WireupDependencies(Assembly.GetExecutingAssembly());
+									var config = WireupConfigurationSection.Instance;
+									foreach (WireupConfigurationElement e in config.Assemblies.OrderBy(e => e.Ordinal))
+									{
+										e.PerformWireup(coord);
+									}
+									var domain = AppDomain.CurrentDomain;
+									if (config.WireupAllRunningAssemblies)
+									{
+										foreach (var asm in domain.GetAssemblies())
+										{
+											coord.NotifyAssemblyLoaded(asm);
+										}
+									}
+									if (config.HookAssemblyLoad)
+									{
+										domain.AssemblyLoad += new AssemblyLoadEventHandler((sender, e) =>
+										{
+											coord.NotifyAssemblyLoaded(e.LoadedAssembly);
+										});
+									}
+
+									__initialized = true;
+								}
+								finally
+								{
+									__reentryDetected = false;
+								}
+							}
+						}
+					}
 				}
 				return coord;
 			}
@@ -54,13 +91,7 @@ namespace FlitBit.Wireup
 
 		static IWireupCoordinator PerformBootstrapCurrentProcess()
 		{
-			WireupConfigurationSection config = ConfigurationManager.GetSection(WireupConfigurationSection.SectionName)
-							as WireupConfigurationSection;
-			config = config ?? new WireupConfigurationSection();
-			_config = new WeakReference<WireupConfigurationSection>(config);
-
-			return config.Coordinator;
+			return WireupConfigurationSection.Instance.Coordinator;
 		}
 	}
-
 }
