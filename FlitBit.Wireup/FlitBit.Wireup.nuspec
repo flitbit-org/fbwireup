@@ -6,8 +6,8 @@
     <title>$title$</title>
     <authors>Phillip Clark</authors>
     <owners>flitbit.org</owners>
-    <licenseUrl>http://fbemit.codeplex.com/license</licenseUrl>
-    <projectUrl>http://fbemit.codeplex.com/</projectUrl>
+    <licenseUrl>http://fbwire.codeplex.com/license</licenseUrl>
+    <projectUrl>http://fbwire.codeplex.com/</projectUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>$description$</description>
     <releaseNotes>Published to CodePlex and packaged for NuGet.</releaseNotes>
