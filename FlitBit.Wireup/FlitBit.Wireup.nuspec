@@ -10,7 +10,7 @@
     <projectUrl>http://fbwire.codeplex.com/</projectUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>$description$</description>
-    <releaseNotes>Published to CodePlex and packaged for NuGet.</releaseNotes>
+    <releaseNotes>Re-signed assembly.</releaseNotes>
     <copyright>Copyright 2013</copyright>
   </metadata>
 </package>

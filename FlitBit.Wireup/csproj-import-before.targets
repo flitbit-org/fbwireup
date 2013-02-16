@@ -21,5 +21,8 @@
 		<SolutionDir>$(MSBuildProjectDirectory)\$(SolutionDirOffset)</SolutionDir>
 	</PropertyGroup>
 
+	<Import Condition="Exists('$(MSBuildProjectDirectory)\StrongName.targets')" Project="$(MSBuildProjectDirectory)\StrongName.targets"/>	
+
 	<Import Condition="Exists('$(SolutionDir)SolutionRoot.targets')" Project="$(SolutionDir)SolutionRoot.targets"/>
+
 </Project>
