@@ -1,5 +1,7 @@
 ﻿#region COPYRIGHT© 2009-2013 Phillip Clark. All rights reserved.
+
 // For licensing information see License.txt (MIT style licensing).
+
 #endregion
 
 using System;
@@ -10,15 +12,15 @@ using FlitBit.Wireup.Properties;
 namespace FlitBit.Wireup.Meta
 {
 	/// <summary>
-	/// Attribute declaring a wireup command for an assembly.
+	///   Attribute declaring a wireup command for an assembly.
 	/// </summary>
-	[AttributeUsage(AttributeTargets.Assembly, AllowMultiple=true)]
+	[AttributeUsage(AttributeTargets.Assembly, AllowMultiple = true)]
 	public sealed class WireupAttribute : Attribute
 	{
-		Type[] _commands;
+		readonly Type[] _commands;
 
 		/// <summary>
-		/// Creates a new WireupAttribute and initializes its behavior.
+		///   Creates a new WireupAttribute and initializes its behavior.
 		/// </summary>
 		/// <param name="behaviors">the assembly's wireup behavior</param>
 		public WireupAttribute(WireupBehaviors behaviors)
@@ -28,7 +30,7 @@ namespace FlitBit.Wireup.Meta
 		}
 
 		/// <summary>
-		/// Creates a new WireupAttribute and initializes the command type.
+		///   Creates a new WireupAttribute and initializes the command type.
 		/// </summary>
 		/// <param name="commandType">command type</param>
 		public WireupAttribute(Type commandType)
@@ -46,7 +48,7 @@ namespace FlitBit.Wireup.Meta
 		}
 
 		/// <summary>
-		/// Creates a new WireupAttribute and initializes its behavior and command type.
+		///   Creates a new WireupAttribute and initializes its behavior and command type.
 		/// </summary>
 		/// <param name="behaviors">the assembly's wireup behavior</param>
 		/// <param name="commandType">command type</param>
@@ -66,7 +68,7 @@ namespace FlitBit.Wireup.Meta
 		}
 
 		/// <summary>
-		/// Creates a new WireupAttribute and initializes its behavior and command types.
+		///   Creates a new WireupAttribute and initializes its behavior and command types.
 		/// </summary>
 		/// <param name="behaviors">the assembly's wireup behavior</param>
 		/// <param name="commandTypes">command types</param>
@@ -89,12 +91,12 @@ namespace FlitBit.Wireup.Meta
 		}
 
 		/// <summary>
-		/// Indicates the assembly's wireup behaviors.
+		///   Indicates the assembly's wireup behaviors.
 		/// </summary>
 		public WireupBehaviors Behaviors { get; private set; }
 
 		/// <summary>
-		/// The command types to be invoked during wireup.
+		///   The command types to be invoked during wireup.
 		/// </summary>
 		public IEnumerable<Type> CommandType
 		{

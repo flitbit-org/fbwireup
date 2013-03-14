@@ -1,37 +1,40 @@
 ﻿#region COPYRIGHT© 2009-2013 Phillip Clark. All rights reserved.
+
 // For licensing information see License.txt (MIT style licensing).
+
 #endregion
 
 using System;
 using System.Linq;
-using System.Configuration;
 using System.Reflection;
 using System.Threading;
-using FlitBit.Core;
+using FlitBit.Wireup.Configuration;
 
 namespace FlitBit.Wireup
 {
 	/// <summary>
-	/// Utility class for coordinating wireup.
+	///   Utility class for coordinating wireup.
 	/// </summary>
 	public static class WireupCoordinator
 	{
 		static bool __initialized;
 		static bool __reentryDetected;
-		static object __sync = new Object();
-		static readonly Lazy<IWireupCoordinator> _coordinator = new Lazy<IWireupCoordinator>(PerformBootstrapCurrentProcess, LazyThreadSafetyMode.ExecutionAndPublication);
+		static readonly object Sync = new Object();
+
+		static readonly Lazy<IWireupCoordinator> Coordinator = new Lazy<IWireupCoordinator>(PerformBootstrapCurrentProcess,
+																																												LazyThreadSafetyMode.ExecutionAndPublication);
 
 		/// <summary>
-		/// Accesses the singleton IWireupCoordinator instance.
+		///   Accesses the singleton IWireupCoordinator instance.
 		/// </summary>
 		public static IWireupCoordinator Instance
 		{
 			get
 			{
-				var coord = _coordinator.Value;
+				var coord = Coordinator.Value;
 				if (!__initialized)
 				{
-					lock (__sync)
+					lock (Sync)
 					{
 						if (!__initialized)
 						{
@@ -44,7 +47,7 @@ namespace FlitBit.Wireup
 									// in case there is no config; make sure this assembly is whole...
 									coord.WireupDependencies(Assembly.GetExecutingAssembly());
 									var config = WireupConfigurationSection.Instance;
-									foreach (WireupConfigurationElement e in config.Assemblies.OrderBy(e => e.Ordinal))
+									foreach (var e in config.Assemblies.OrderBy(e => e.Ordinal))
 									{
 										e.PerformWireup(coord);
 									}
@@ -58,10 +61,8 @@ namespace FlitBit.Wireup
 									}
 									if (config.HookAssemblyLoad)
 									{
-										domain.AssemblyLoad += new AssemblyLoadEventHandler((sender, e) =>
-										{
-											coord.NotifyAssemblyLoaded(e.LoadedAssembly);
-										});
+										domain.AssemblyLoad +=
+											(sender, e) => coord.NotifyAssemblyLoaded(e.LoadedAssembly);
 									}
 
 									__initialized = true;
@@ -79,19 +80,16 @@ namespace FlitBit.Wireup
 		}
 
 		/// <summary>
-		/// Causes the wireup coordinator to self-configure.
+		///   Causes the wireup coordinator to self-configure.
 		/// </summary>
 		/// <returns>the coordinator after it self-configures</returns>
 		public static IWireupCoordinator SelfConfigure()
 		{
-			var coordinator = WireupCoordinator.Instance;
+			var coordinator = Instance;
 			coordinator.WireupDependencies(Assembly.GetCallingAssembly());
 			return coordinator;
 		}
 
-		static IWireupCoordinator PerformBootstrapCurrentProcess()
-		{
-			return WireupConfigurationSection.Instance.Coordinator;
-		}
+		static IWireupCoordinator PerformBootstrapCurrentProcess() { return WireupConfigurationSection.Instance.Coordinator; }
 	}
 }
