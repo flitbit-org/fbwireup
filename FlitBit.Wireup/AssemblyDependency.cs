@@ -10,7 +10,7 @@ using System.Diagnostics.Contracts;
 namespace FlitBit.Wireup
 {
 	/// <summary>
-	///   Structure around a key-value-pair.
+	///   Dependency identifying an assembly and version.
 	/// </summary>
 	public struct AssemblyDependency
 	{

@@ -89,9 +89,9 @@
     <CodeContractsEmitXMLDocs>True</CodeContractsEmitXMLDocs>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="FlitBit.Core, Version=2.9.0.0, Culture=neutral, PublicKeyToken=38f03d0878531ff3, processorArchitecture=MSIL">
+    <Reference Include="FlitBit.Core, Version=2.10.1.0, Culture=neutral, PublicKeyToken=38f03d0878531ff3, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\FlitBit.Core.2.9.0\lib\net40\FlitBit.Core.dll</HintPath>
+      <HintPath>..\packages\FlitBit.Core.2.10.1\lib\net40\FlitBit.Core.dll</HintPath>
     </Reference>
     <Reference Include="Newtonsoft.Json">
       <HintPath>..\packages\Newtonsoft.Json.4.5.11\lib\net40\Newtonsoft.Json.dll</HintPath>
@@ -108,6 +108,9 @@
       <Link>Properties\AssemblyInfo.corporate.cs</Link>
     </Compile>
     <Compile Include="AssemblyDependency.cs" />
+    <Compile Include="Configuration\WireupIgnoreConfigurationElementCollection.cs" />
+    <Compile Include="Configuration\WireupConfigurationElementCollection.cs" />
+    <Compile Include="Configuration\WireupIgnoreConfigurationElement.cs" />
     <Compile Include="Configuration\WireupConfigurationSection.cs" />
     <Compile Include="Configuration\WireupConfigurationElement.cs" />
     <Compile Include="Constants.cs" />

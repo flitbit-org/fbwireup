@@ -56,13 +56,22 @@ namespace FlitBit.Wireup
 									{
 										foreach (var asm in domain.GetAssemblies())
 										{
-											coord.NotifyAssemblyLoaded(asm);
+											if (!config.IsIgnored(asm))
+											{
+												coord.NotifyAssemblyLoaded(asm);
+											}
 										}
 									}
 									if (config.HookAssemblyLoad)
 									{
 										domain.AssemblyLoad +=
-											(sender, e) => coord.NotifyAssemblyLoaded(e.LoadedAssembly);
+											(sender, e) =>
+											{
+												if (!config.IsIgnored(e.LoadedAssembly))
+												{
+													coord.NotifyAssemblyLoaded(e.LoadedAssembly);
+												}
+											};
 									}
 
 									__initialized = true;
@@ -80,7 +89,8 @@ namespace FlitBit.Wireup
 		}
 
 		/// <summary>
-		///   Causes the wireup coordinator to self-configure.
+		///   Causes the wireup coordinator to self-configure; this will bootstrap the WireupCoordinator if it
+		/// has not already been wired, then wireup the calling assembly.
 		/// </summary>
 		/// <returns>the coordinator after it self-configures</returns>
 		public static IWireupCoordinator SelfConfigure()

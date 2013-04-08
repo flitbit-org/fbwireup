@@ -5,26 +5,13 @@
 #endregion
 
 using System;
+using System.Linq;
 using System.Configuration;
-using FlitBit.Core.Configuration;
 using FlitBit.Wireup.Properties;
+using System.Reflection;
 
 namespace FlitBit.Wireup.Configuration
 {
-	/// <summary>
-	///   Configuration element collection for wireup elements.
-	/// </summary>
-	public class WireupConfigurationElementCollection :
-		AbstractConfigurationElementCollection<WireupConfigurationElement, string>
-	{
-		/// <summary>
-		///   Gets the element's key
-		/// </summary>
-		/// <param name="element">the element</param>
-		/// <returns>the key</returns>
-		protected override string PerformGetElementKey(WireupConfigurationElement element) { return element.AssemblyName; }
-	}
-
 	/// <summary>
 	///   Configuration section for wireup.
 	/// </summary>
@@ -32,6 +19,7 @@ namespace FlitBit.Wireup.Configuration
 	{
 		internal const string SectionName = "flitbit.wireup";
 		const string PropertyNameAssemblies = "assemblies";
+		const string PropertyNameIgnore = "ignore";
 		const string PropertyNameHookAssemblyLoad = "hookAssemblyLoad";
 		const string PropertyNameType = "type";
 		const string PropertyNameWireupAllRunningAssemblies = "wireupAllRunningAssemblies";
@@ -43,6 +31,15 @@ namespace FlitBit.Wireup.Configuration
 		public WireupConfigurationElementCollection Assemblies
 		{
 			get { return (WireupConfigurationElementCollection) this[PropertyNameAssemblies]; }
+		}
+
+		/// <summary>
+		///   Gets the collection of ignore specifications.
+		/// </summary>
+		[ConfigurationProperty(PropertyNameIgnore, IsDefaultCollection = false)]
+		public WireupIgnoreConfigurationElementCollection Ignore
+		{
+			get { return (WireupIgnoreConfigurationElementCollection)this[PropertyNameIgnore]; }
 		}
 
 		/// <summary>
@@ -105,6 +102,11 @@ namespace FlitBit.Wireup.Configuration
 					as WireupConfigurationSection;
 				return config ?? new WireupConfigurationSection();
 			}
+		}
+
+		internal bool IsIgnored(Assembly asm)
+		{
+			return Ignore.Any(ig => ig.Matches(asm));
 		}
 	}
 }
