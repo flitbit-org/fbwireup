@@ -13,6 +13,9 @@ namespace FlitBit.Wireup.Configuration
 		/// </summary>
 		/// <param name="element">the element</param>
 		/// <returns>the key</returns>
-		protected override string PerformGetElementKey(WireupConfigurationElement element) { return element.AssemblyName; }
+		protected override string PerformGetElementKey(WireupConfigurationElement element)
+		{
+			return element.AssemblyName;
+		}
 	}
 }

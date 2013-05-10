@@ -8,6 +8,7 @@ using System;
 using System.Configuration;
 using System.Diagnostics.Contracts;
 using System.Reflection;
+using FlitBit.Wireup.Recording;
 
 namespace FlitBit.Wireup.Configuration
 {
@@ -26,21 +27,13 @@ namespace FlitBit.Wireup.Configuration
 		[ConfigurationProperty(PropertyNameAssembly
 			, IsKey = true
 			, IsRequired = true)]
-		public string AssemblyName
-		{
-			get { return (string) this[PropertyNameAssembly]; }
-			set { this[PropertyNameAssembly] = value; }
-		}
+		public string AssemblyName { get { return (string) this[PropertyNameAssembly]; } set { this[PropertyNameAssembly] = value; } }
 
 		/// <summary>
 		///   The ordinal; indicates the order in which assemblies are registered.
 		/// </summary>
 		[ConfigurationProperty(PropertyNameOrdinal, DefaultValue = 0)]
-		public int Ordinal
-		{
-			get { return (int) this[PropertyNameOrdinal]; }
-			set { this[PropertyNameOrdinal] = value; }
-		}
+		public int Ordinal { get { return (int) this[PropertyNameOrdinal]; } set { this[PropertyNameOrdinal] = value; } }
 
 		internal Assembly ResolveAssembly
 		{
@@ -54,10 +47,11 @@ namespace FlitBit.Wireup.Configuration
 			}
 		}
 
-		internal void PerformWireup(IWireupCoordinator coordinator)
+		internal void PerformWireup(IWireupCoordinator coordinator, WireupContext context)
 		{
 			Contract.Requires<ArgumentNullException>(coordinator != null);
-			coordinator.WireupDependencies(this.ResolveAssembly);
+			Contract.Requires<ArgumentNullException>(context != null);
+			coordinator.WireupDependencies(context, this.ResolveAssembly);
 		}
 	}
 }

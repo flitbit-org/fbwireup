@@ -5,10 +5,10 @@
 #endregion
 
 using System;
-using System.Linq;
 using System.Reflection;
 using System.Threading;
 using FlitBit.Wireup.Configuration;
+using FlitBit.Wireup.Recording;
 
 namespace FlitBit.Wireup
 {
@@ -17,12 +17,13 @@ namespace FlitBit.Wireup
 	/// </summary>
 	public static class WireupCoordinator
 	{
-		static bool __initialized;
-		static bool __reentryDetected;
-		static readonly object Sync = new Object();
-
 		static readonly Lazy<IWireupCoordinator> Coordinator = new Lazy<IWireupCoordinator>(PerformBootstrapCurrentProcess,
 																																												LazyThreadSafetyMode.ExecutionAndPublication);
+
+		static readonly object Sync = new Object();
+
+		static bool __initialized;
+		static bool __reentryDetected;
 
 		/// <summary>
 		///   Accesses the singleton IWireupCoordinator instance.
@@ -44,37 +45,12 @@ namespace FlitBit.Wireup
 								{
 									__reentryDetected = true;
 
-									// in case there is no config; make sure this assembly is whole...
-									coord.WireupDependencies(Assembly.GetExecutingAssembly());
-									var config = WireupConfigurationSection.Instance;
-									foreach (var e in config.Assemblies.OrderBy(e => e.Ordinal))
+									var thisAssembly = Assembly.GetExecutingAssembly();
+									using (var context = WireupContext.NewOrShared(coord, c => c.InitialAssembly(coord, thisAssembly)))
 									{
-										e.PerformWireup(coord);
+										__initialized = true;
+										context.Sequence.EndScope();
 									}
-									var domain = AppDomain.CurrentDomain;
-									if (config.WireupAllRunningAssemblies)
-									{
-										foreach (var asm in domain.GetAssemblies())
-										{
-											if (!config.IsIgnored(asm))
-											{
-												coord.NotifyAssemblyLoaded(asm);
-											}
-										}
-									}
-									if (config.HookAssemblyLoad)
-									{
-										domain.AssemblyLoad +=
-											(sender, e) =>
-											{
-												if (!config.IsIgnored(e.LoadedAssembly))
-												{
-													coord.NotifyAssemblyLoaded(e.LoadedAssembly);
-												}
-											};
-									}
-
-									__initialized = true;
 								}
 								finally
 								{
@@ -90,16 +66,24 @@ namespace FlitBit.Wireup
 
 		/// <summary>
 		///   Causes the wireup coordinator to self-configure; this will bootstrap the WireupCoordinator if it
-		/// has not already been wired, then wireup the calling assembly.
+		///   has not already been wired, then wireup the calling assembly.
 		/// </summary>
 		/// <returns>the coordinator after it self-configures</returns>
 		public static IWireupCoordinator SelfConfigure()
 		{
+			// resolve the singleton instance seperately
+			// so we cleanly record the bootstrap, then the caller's request.
 			var coordinator = Instance;
-			coordinator.WireupDependencies(Assembly.GetCallingAssembly());
-			return coordinator;
+			var caller = Assembly.GetCallingAssembly();
+			using (WireupContext.NewOrShared(coordinator, c => c.InitialAssembly(coordinator, caller)))
+			{
+				return coordinator;
+			}
 		}
 
-		static IWireupCoordinator PerformBootstrapCurrentProcess() { return WireupConfigurationSection.Instance.Coordinator; }
+		static IWireupCoordinator PerformBootstrapCurrentProcess()
+		{
+			return WireupConfigurationSection.Instance.CreateConfiguredCoordinator();
+		}
 	}
 }

@@ -123,4 +123,7 @@
   <data name="Err_ConfiguredWireupCoordinatorTypeMismatch" xml:space="preserve">
     <value>configured wireup coordinator must implement IWireupCoordinator: </value>
   </data>
+  <data name="Err_NotInitialized" xml:space="preserve">
+    <value>instance must be initialized</value>
+  </data>
 </root>

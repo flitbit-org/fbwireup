@@ -4,37 +4,39 @@
 
 #endregion
 
-using System;
 using System.Configuration;
-using System.Diagnostics.Contracts;
 using System.Reflection;
 using System.Text.RegularExpressions;
 
 namespace FlitBit.Wireup.Configuration
 {
 	/// <summary>
-	/// Determines how wireup ignore configuration elements are processed.
+	///   Determines how wireup ignore configuration elements are processed.
 	/// </summary>
 	public enum WireupIgnoreStrategy
-	{														
+	{
 		/// <summary>
-		/// Default behavior: matches.
+		///   Default behavior: matches.
 		/// </summary>
-		Default = 0, 
+		Default = 0,
+
 		/// <summary>
-		/// Indicates the assemby name should be matched using regex.
+		///   Indicates the assemby name should be matched using regex.
 		/// </summary>
 		Regex = 0,
+
 		/// <summary>
-		/// Indicates the assembly name is a match if it begins with the given value.
+		///   Indicates the assembly name is a match if it begins with the given value.
 		/// </summary>
 		StartsWith = 1,
+
 		/// <summary>
-		/// Indicates the assembly name is a match if it ends with the given value.
+		///   Indicates the assembly name is a match if it ends with the given value.
 		/// </summary>
 		EndsWith = 2,
+
 		/// <summary>
-		/// Indicates the assembly name must match exactly.
+		///   Indicates the assembly name must match exactly.
 		/// </summary>
 		Exact = 3
 	}
@@ -46,32 +48,27 @@ namespace FlitBit.Wireup.Configuration
 	{
 		const string PropertyNameAssembly = "match";
 		const string PropertyNameStrategy = "strategy";
-		
+
 		/// <summary>
 		///   Assembly match specification.
 		/// </summary>
 		[ConfigurationProperty(PropertyNameAssembly
 			, IsKey = true
 			, IsRequired = true)]
-		public string AssemblyMatchSpec
-		{
-			get { return (string) this[PropertyNameAssembly]; }
-			set { this[PropertyNameAssembly] = value; }
-		}
+		public string AssemblyMatchSpec { get { return (string) this[PropertyNameAssembly]; } set { this[PropertyNameAssembly] = value; } }
 
 		/// <summary>
 		///   The strategy used when checking whether assemblies match
 		/// </summary>
 		[ConfigurationProperty(PropertyNameStrategy, DefaultValue = WireupIgnoreStrategy.Regex)]
-		public WireupIgnoreStrategy Strategy
-		{
-			get { return (WireupIgnoreStrategy)this[PropertyNameStrategy]; }
-			set { this[PropertyNameStrategy] = value; }
-		}
-		
+		public WireupIgnoreStrategy Strategy { get { return (WireupIgnoreStrategy) this[PropertyNameStrategy]; } set { this[PropertyNameStrategy] = value; } }
+
 		internal bool Matches(Assembly asm)
 		{
-			if (asm == null) return false;
+			if (asm == null)
+			{
+				return false;
+			}
 			var name = asm.FullName;
 			switch (Strategy)
 			{

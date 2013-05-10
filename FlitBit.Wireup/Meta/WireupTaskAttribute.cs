@@ -6,6 +6,7 @@
 
 using System;
 using System.Diagnostics.Contracts;
+using FlitBit.Wireup.Recording;
 
 namespace FlitBit.Wireup.Meta
 {
@@ -21,13 +22,17 @@ namespace FlitBit.Wireup.Meta
 		///   Createas a new instance.
 		/// </summary>
 		protected WireupTaskAttribute()
-			: this(WireupPhase.Tasks) { }
+			: this(WireupPhase.Tasks)
+		{}
 
 		/// <summary>
 		///   Createas a new instance.
 		/// </summary>
 		/// <param name="phase">the wireup phase in which the task is executed</param>
-		protected WireupTaskAttribute(WireupPhase phase) { this.Phase = phase; }
+		protected WireupTaskAttribute(WireupPhase phase)
+		{
+			this.Phase = phase;
+		}
 
 		/// <summary>
 		///   Indicates the wireup phase.
@@ -43,10 +48,13 @@ namespace FlitBit.Wireup.Meta
 		/// <summary>
 		///   Called by the framework to execute the task.
 		/// </summary>
-		internal void ExecuteTask(IWireupCoordinator coordinator)
+		internal void ExecuteTask(IWireupCoordinator coordinator, WireupContext context)
 		{
 			Contract.Requires<ArgumentNullException>(coordinator != null);
+			Contract.Requires<ArgumentNullException>(context != null);
 
+			context.WireupDependency(coordinator, this.GetType()
+																								.Assembly);
 			PerformTask(coordinator);
 		}
 	}

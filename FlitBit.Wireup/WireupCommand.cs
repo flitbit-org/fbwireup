@@ -25,7 +25,10 @@ namespace FlitBit.Wireup
 		///   Executes the wireup command.
 		/// </summary>
 		[SuppressMessage("Microsoft.Design", "CA1033")]
-		void IWireupCommand.Execute(IWireupCoordinator coordinator) { PerformWireup(coordinator); }
+		void IWireupCommand.Execute(IWireupCoordinator coordinator)
+		{
+			PerformWireup(coordinator);
+		}
 
 		#endregion
 	}

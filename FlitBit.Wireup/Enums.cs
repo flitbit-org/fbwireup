@@ -12,16 +12,16 @@ namespace FlitBit.Wireup
 	public enum WireupBehaviors
 	{
 		/// <summary>
-		///   Indicates the wireup coordinator should only use declarations to
-		///   guide the wireup.
-		/// </summary>
-		DeclarationsOnly = 0,
-
-		/// <summary>
 		///   Indicates the wireup coordinator should use discovery to guide
 		///   wireup.
 		/// </summary>
-		Discovery = 1,
+		Discovery = 0,
+
+		/// <summary>
+		///   Indicates the wireup coordinator should only use declarations to
+		///   guide the wireup.
+		/// </summary>
+		DeclarationsOnly = 1
 	}
 
 	/// <summary>
@@ -32,32 +32,37 @@ namespace FlitBit.Wireup
 		/// <summary>
 		///   Immediately upon discovery.
 		/// </summary>
-		Immediate = -5,
+		Immediate = -6,
 
 		/// <summary>
 		///   Indicates before dependencies are resolved.
 		/// </summary>
-		BeforeDependencies = -4,
+		BeforeDependencies = -5,
 
 		/// <summary>
 		///   Indicates as dependencies are resolved.
 		/// </summary>
-		Dependencies = -3,
+		Dependencies = -4,
 
 		/// <summary>
 		///   Indicates before tasks are executed.
 		/// </summary>
-		BeforeTasks = -2,
+		BeforeTasks = -3,
 
 		/// <summary>
 		///   Indicates as tasks are executed.
 		/// </summary>
-		Tasks = -1,
+		Tasks = -2,
 
 		/// <summary>
 		///   Indicates before wireup.
 		/// </summary>
-		BeforeWireup = 0,
+		BeforeWireup = -1,
+
+		/// <summary>
+		///   Default; indicates during the wireup phase.
+		/// </summary>
+		Wireup = 0,
 
 		/// <summary>
 		///   Indicates after wireup.

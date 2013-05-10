@@ -7,251 +7,136 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Reflection;
-using System.Threading;
+using System.Text;
 using FlitBit.Core;
-using FlitBit.Wireup.Meta;
-using FlitBit.Wireup.Properties;
+using FlitBit.Wireup.Recording;
 
 namespace FlitBit.Wireup
 {
 	internal sealed class DefaultWireupCoordinator : IWireupCoordinator
 	{
-		readonly ConcurrentDictionary<object, IEnumerable<AssemblyDependency>> _asmTracking =
-			new ConcurrentDictionary<object, IEnumerable<AssemblyDependency>>();
+		readonly ConcurrentDictionary<object, WiredAssembly> _assemblies =
+			new ConcurrentDictionary<object, WiredAssembly>();
 
-		readonly Stack<Assembly> _assemblies = new Stack<Assembly>();
+		readonly ConcurrentDictionary<int, WireupContext> _contexts = new ConcurrentDictionary<int, WireupContext>();
+
 		readonly Object _lock = new Object();
-		readonly Stack<Type> _types = new Stack<Type>();
-		readonly ConcurrentDictionary<object, CommandTracking> _wired = new ConcurrentDictionary<object, CommandTracking>();
+
 		readonly ConcurrentDictionary<Guid, IWireupObserver> _observers = new ConcurrentDictionary<Guid, IWireupObserver>();
 
-		void AddDependencies(Assembly asm, List<AssemblyDependency> deps, List<WireupDependencyAttribute> attrs,
-			IEnumerable<object> dependencies)
+		WiredAssembly PerformWireupDependencies(WireupContext context, Assembly asm)
 		{
-			foreach (var dep in dependencies.Cast<WireupDependencyAttribute>())
+			var key = asm.GetKeyForAssembly();
+			WiredAssembly wired;
+			if (!_assemblies.TryGetValue(key, out wired))
 			{
-				if (dep.Phase == WireupPhase.Immediate)
+				wired = new WiredAssembly(context, asm);
+				var concurrent = _assemblies.GetOrAdd(key, wired);
+				if (ReferenceEquals(wired, concurrent) && wired.HasDeclarations)
 				{
-					ProcessDependencyTarget(asm, dep.TargetType, deps);
-				}
-				else
-				{
-					attrs.Add(dep);
-				}
-			}
-		}
-
-		void AddTasks(Type target, List<WireupTask> attrs, IEnumerable<object> dependencies)
-		{
-			foreach (var task in dependencies.Cast<WireupTaskAttribute>())
-			{
-				if (task.Phase == WireupPhase.Immediate)
-				{
-					ProcessTask(new WireupTask(target, task));
-				}
-				else
-				{
-					attrs.Add(new WireupTask(target, task));
-				}
-			}
-		}
-
-		void InvokeWireupCommand(Type type)
-		{
-			Contract.Requires<ArgumentNullException>(type != null);
-			Contract.Assume(_types != null);
-			Contract.Assume(_asmTracking != null);
-
-			if (!_types.Contains(type))
-			{
-				_types.Push(type);
-				try
-				{
-					// Assemblies may have dependencies declared; wire them first.
-					foreach (WireupDependencyAttribute d in type.GetCustomAttributes(typeof(WireupDependencyAttribute), false))
-					{
-						var r = d.TargetType;
-						WireupDependencies(r.Assembly);
-					}
-					var key = type.GetKeyForType();
-					CommandTracking ours = null;
-					var tracking = _wired.GetOrAdd(key, k =>
-					{
-						ours = new CommandTracking();
-						return ours;
-					});
-					tracking.Increment();
-					if (ReferenceEquals(ours, tracking))
-					{
-						var cmd = (IWireupCommand) Activator.CreateInstance(type);
-						cmd.Execute(this);
-					}
-				}
-				finally
-				{
-					_types.Pop();
-				}
-			}
-		}
-
-		bool IsAssemblyWired(Assembly asm)
-		{
-			Contract.Requires<ArgumentNullException>(asm != null);
-			Contract.Assume(_asmTracking != null);
-			return _asmTracking.ContainsKey(asm.GetKeyForAssembly());
-		}
-
-		IEnumerable<AssemblyDependency> PerformWireupDependencies(Assembly asm)
-		{
-			Contract.Assert(asm != null);
-			var myDeps = new List<AssemblyDependency>();
-			lock (_lock)
-			{
-				// The stacks are used to avoid cycles among the dependency declarations.
-				if (!IsAssemblyWired(asm) && !_assemblies.Contains(asm))
-				{
-					_assemblies.Push(asm);
+					context.Sequence.BeginScope();
 					try
 					{
-						var deps = new List<WireupDependencyAttribute>();
-						var tasks = new List<WireupTask>();
-
-						AddDependencies(asm, myDeps, deps, asm.GetCustomAttributes(typeof(WireupDependencyAttribute), false));
-						AddTasks(null, tasks, asm.GetCustomAttributes(typeof(WireupTaskAttribute), false));
-
-						// Assemblies may have more than one module.
-						foreach (var mod in asm.GetModules(false))
-						{
-							AddDependencies(asm, myDeps, deps, mod.GetCustomAttributes(typeof(WireupDependencyAttribute), false));
-							AddTasks(null, tasks, mod.GetCustomAttributes(typeof(WireupTaskAttribute), false));
-
-							foreach (var type in mod.GetTypes())
-							{
-								AddTasks(type, tasks, type.GetCustomAttributes(typeof(WireupTaskAttribute), false));
-							}
-						}
-
-						// Phase: BeforeDependencies
-						ProcessPhase(deps, tasks, asm, myDeps, WireupPhase.BeforeDependencies);
-
-						// Phase: Dependencies
-						ProcessPhase(deps, tasks, asm, myDeps, WireupPhase.Dependencies);
-
-						// Phase: BeforeTasks
-						ProcessPhase(deps, tasks, asm, myDeps, WireupPhase.BeforeTasks);
-
-						// Phase: Tasks
-						ProcessPhase(deps, tasks, asm, myDeps, WireupPhase.Tasks);
-
-						// Phase: BeforeWireup
-						ProcessPhase(deps, tasks, asm, myDeps, WireupPhase.BeforeWireup);
-
-						// Execute the wireup commands declared for the assembly...
-						foreach (WireupAttribute w in asm.GetCustomAttributes(typeof(WireupAttribute), false))
-						{
-							foreach (var t in w.CommandType)
-							{
-								if (!_types.Contains(t))
-								{
-									InvokeWireupCommand(t);
-								}
-							}
-						}
-
-						// Phase: AfterWireup
-						ProcessPhase(deps, tasks, asm, myDeps, WireupPhase.AfterWireup);
-
-						if (!IsAssemblyWired(asm))
-						{
-							_asmTracking.TryAdd(asm.GetKeyForAssembly(), myDeps);
-						}
+						context.Sequence.Push(String.Concat("Wiring assembly: ", wired.AssemblyName.FullName));
+						wired.PerformImmediatePhase(this, context);
+						wired.PerformWireup(this, context, asm);
 					}
 					finally
 					{
-						_assemblies.Pop();
+						context.Sequence.EndScope();
 					}
 				}
+				return concurrent;
 			}
-			return myDeps.ToReadOnly();
+			return wired;
 		}
 
-		void ProcessDependencyTarget(Assembly asm, Type type, List<AssemblyDependency> myDeps)
+		WiredType PerformWireupDependencies(WireupContext context, Type type)
 		{
-			if (!_types.Contains(type))
+			var asm = type.Assembly;
+			var key = asm.GetKeyForAssembly();
+			WiredAssembly wired;
+			if (!_assemblies.TryGetValue(key, out wired))
 			{
-				var asmName = asm.GetName();
-				var dep = new AssemblyDependency(asmName.Name, String.Concat("v", asmName.Version.ToString()));
-				if (!myDeps.Contains(dep))
+				wired = new WiredAssembly(context, asm);
+				var concurrent = _assemblies.GetOrAdd(key, wired);
+				if (ReferenceEquals(wired, concurrent) && wired.HasDeclarations)
 				{
-					myDeps.Add(dep);
-					myDeps.AddRange(PerformWireupDependencies(type.Assembly));
+					wired.PerformImmediatePhase(this, context);
+					wired.PerformWireup(this, context, asm);
 				}
-				InvokeWireupCommand(type);
+				wired = concurrent;
 			}
-		}
-
-		void ProcessPhase(IEnumerable<WireupDependencyAttribute> deps, IEnumerable<WireupTask> tasks, Assembly asm,
-			List<AssemblyDependency> myDeps, WireupPhase wireupPhase)
-		{
-			foreach (var d in deps.Where(d => d.Phase == wireupPhase))
-			{
-				ProcessDependencyTarget(asm, d.TargetType, myDeps);
-			}
-			foreach (var t in tasks.Where(t => t.Task.Phase == wireupPhase))
-			{
-				ProcessTask(t);
-			}
-		}
-
-		void ProcessTask(WireupTask task)
-		{
-			task.Task.ExecuteTask(this);
-			foreach (var observer in _observers.Values)
-			{
-				observer.NotifyWireupTask(this, task.Task, task.Target);
-			}
+			return wired.PerformWireupType(this, context, type);
 		}
 
 		#region IWireupCoordinator Members
 
-		public IEnumerable<AssemblyDependency> WireupDependencies(Assembly asm)
+		public WiredType WireupDependency(WireupContext context, Type type)
 		{
-			Contract.Assert(asm != null);
-
-			return PerformWireupDependencies(asm);
-		}
-
-		public void WireupDependency(Type type)
-		{
-			if (type == null)
+			if (context != null)
 			{
-				throw new ArgumentNullException("type");
+				_contexts.TryAdd(context.ID, context);
+				return PerformWireupDependencies(context, type);
 			}
-			if (!typeof(IWireupCommand).IsAssignableFrom(type))
+			using (var myContext = WireupContext.NewOrShared(this, c => c.InitialType(this, type)))
 			{
-				throw new ArgumentException(Resources.Chk_TypeMustBeAssignableToIWireupCommand, "type");
-			}
-
-			if (!_types.Contains(type))
-			{
-				InvokeWireupCommand(type);
+				_contexts.TryAdd(myContext.ID, myContext);
+				return PerformWireupDependencies(myContext, type);
 			}
 		}
 
-		public IEnumerable<AssemblyDependency> ExposeDependenciesFor(Assembly assem)
+		/// <summary>
+		///   Creates a string reporting of the wireup history.
+		/// </summary>
+		/// <returns></returns>
+		public string ReportWireupHistory()
 		{
-			IEnumerable<AssemblyDependency> deps;
-			if (_asmTracking.TryGetValue(assem.GetKeyForAssembly(), out deps))
+			var buffer = new StringBuilder(4000);
+			foreach (var h in this.ContextHistory)
 			{
-				return deps.ToReadOnly();
+				foreach (var r in h.Sequence.Records)
+				{
+					buffer.Append(Environment.NewLine)
+								.Append(r.ThreadId)
+								.Append(" ")
+								.Append(new string('\t', r.Depth))
+								.Append(r.Details);
+				}
 			}
-			return Enumerable.Empty<AssemblyDependency>();
+			return buffer.ToString();
 		}
 
-		public void RegisterObserver(IWireupObserver observer) { _observers.TryAdd(observer.ObserverKey, observer); }
+		public WiredAssembly WireupDependencies(WireupContext context, Assembly asm)
+		{
+			if (context != null)
+			{
+				_contexts.TryAdd(context.ID, context);
+				return PerformWireupDependencies(context, asm);
+			}
+			using (var myContext = WireupContext.NewOrShared(this, c => c.InitialAssembly(this, asm)))
+			{
+				_contexts.TryAdd(myContext.ID, myContext);
+				return PerformWireupDependencies(myContext, asm);
+			}
+		}
+
+		public IEnumerable<WireupContext> ContextHistory
+		{
+			get
+			{
+				return from c in _contexts.Values
+							orderby c.ID
+							select c;
+			}
+		}
+
+		public void RegisterObserver(IWireupObserver observer)
+		{
+			_observers.TryAdd(observer.ObserverKey, observer);
+		}
 
 		public void UnregisterObserver(Guid key)
 		{
@@ -263,30 +148,10 @@ namespace FlitBit.Wireup
 		{
 			lock (_lock)
 			{
-				WireupDependencies(assembly);
+				WireupDependencies(WireupContext.Current, assembly);
 			}
 		}
 
 		#endregion
-
-		class CommandTracking
-		{
-			int _dependencyCount = 1;
-			public void Increment() {
-				Interlocked.Increment(ref this._dependencyCount);
-			}
-		}
-
-		class WireupTask
-		{
-			internal WireupTask(Type target, WireupTaskAttribute attr)
-			{
-				this.Target = target;
-				this.Task = attr;
-			}
-
-			public Type Target { get; private set; }
-			public WireupTaskAttribute Task { get; private set; }
-		}
 	}
 }

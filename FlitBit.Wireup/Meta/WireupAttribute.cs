@@ -14,7 +14,7 @@ namespace FlitBit.Wireup.Meta
 	/// <summary>
 	///   Attribute declaring a wireup command for an assembly.
 	/// </summary>
-	[AttributeUsage(AttributeTargets.Assembly, AllowMultiple = true)]
+	[AttributeUsage(AttributeTargets.Assembly | AttributeTargets.Module, AllowMultiple = true)]
 	public sealed class WireupAttribute : Attribute
 	{
 		readonly Type[] _commands;
@@ -35,26 +35,6 @@ namespace FlitBit.Wireup.Meta
 		/// <param name="commandType">command type</param>
 		public WireupAttribute(Type commandType)
 		{
-			var commands = new List<Type>();
-			if (typeof(IWireupCommand).IsAssignableFrom(commandType))
-			{
-				commands.Add(commandType);
-			}
-			else
-			{
-				throw new ArgumentException(Resources.Chk_TypeMustBeAssignableToIWireupCommand);
-			}
-			this._commands = commands.ToArray();
-		}
-
-		/// <summary>
-		///   Creates a new WireupAttribute and initializes its behavior and command type.
-		/// </summary>
-		/// <param name="behaviors">the assembly's wireup behavior</param>
-		/// <param name="commandType">command type</param>
-		public WireupAttribute(WireupBehaviors behaviors, Type commandType)
-		{
-			Behaviors = behaviors;
 			var commands = new List<Type>();
 			if (typeof(IWireupCommand).IsAssignableFrom(commandType))
 			{
@@ -98,9 +78,6 @@ namespace FlitBit.Wireup.Meta
 		/// <summary>
 		///   The command types to be invoked during wireup.
 		/// </summary>
-		public IEnumerable<Type> CommandType
-		{
-			get { return _commands.ToReadOnly(); }
-		}
+		public IEnumerable<Type> CommandType { get { return _commands.ToReadOnly(); } }
 	}
 }

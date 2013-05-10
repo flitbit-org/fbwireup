@@ -23,7 +23,10 @@ namespace FlitBit.Wireup.Meta
 		/// </summary>
 		/// <param name="target">The type upon which the attribute target is dependent</param>
 		public WireupDependencyAttribute(Type target)
-			: this(WireupPhase.Dependencies, target) { Contract.Requires<ArgumentNullException>(target != null); }
+			: this(WireupPhase.Dependencies, target)
+		{
+			Contract.Requires<ArgumentNullException>(target != null);
+		}
 
 		/// <summary>
 		///   Createas a new WireupDependency and initializes it with a type upon which the

@@ -6,6 +6,7 @@
 
 using System;
 using System.Diagnostics.Contracts;
+using FlitBit.Core;
 
 namespace FlitBit.Wireup
 {
@@ -38,18 +39,12 @@ namespace FlitBit.Wireup
 		/// <summary>
 		///   Gets the assembly's name.
 		/// </summary>
-		public string Name
-		{
-			get { return _assembly; }
-		}
+		public string Name { get { return _assembly; } }
 
 		/// <summary>
 		///   Gets the assembly's version.
 		/// </summary>
-		public string Version
-		{
-			get { return _version; }
-		}
+		public string Version { get { return _version; } }
 
 		/// <summary>
 		///   Determines if the pair is equal to another object.
@@ -70,7 +65,7 @@ namespace FlitBit.Wireup
 		/// <returns></returns>
 		public override int GetHashCode()
 		{
-			const int prime = Constants.RandomPrime; // a random prime
+			const int prime = Constants.NotSoRandomPrime;
 
 			var result = CHashCodeSeed * prime;
 			if (_assembly != null)
@@ -88,7 +83,10 @@ namespace FlitBit.Wireup
 		///   Converts the pair to a string representation.
 		/// </summary>
 		/// <returns></returns>
-		public override string ToString() { return String.Concat("{ Name=\"", _assembly, ", Version=\"", _version, "\" }"); }
+		public override string ToString()
+		{
+			return String.Concat("{ Name=\"", _assembly, ", Version=\"", _version, "\" }");
+		}
 
 		/// <summary>
 		///   Determines if the pair is equal to another.
@@ -111,7 +109,10 @@ namespace FlitBit.Wireup
 		/// <returns>
 		///   <em>true</em> if equal; otherwise <em>false</em>
 		/// </returns>
-		public static bool operator ==(AssemblyDependency lhs, AssemblyDependency rhs) { return lhs.Equals(rhs); }
+		public static bool operator ==(AssemblyDependency lhs, AssemblyDependency rhs)
+		{
+			return lhs.Equals(rhs);
+		}
 
 		/// <summary>
 		///   Determines if two pairs are unequal.
@@ -121,6 +122,9 @@ namespace FlitBit.Wireup
 		/// <returns>
 		///   <em>true</em> if unequal; otherwise <em>false</em>
 		/// </returns>
-		public static bool operator !=(AssemblyDependency lhs, AssemblyDependency rhs) { return !lhs.Equals(rhs); }
+		public static bool operator !=(AssemblyDependency lhs, AssemblyDependency rhs)
+		{
+			return !lhs.Equals(rhs);
+		}
 	}
 }
