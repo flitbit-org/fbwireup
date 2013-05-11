@@ -34,23 +34,57 @@ namespace FlitBit.Wireup
 			{
 				wired = new WiredAssembly(context, asm);
 				var concurrent = _assemblies.GetOrAdd(key, wired);
-				if (ReferenceEquals(wired, concurrent) && wired.HasDeclarations)
+				if (ReferenceEquals(wired, concurrent))
 				{
-					context.Sequence.BeginScope();
-					try
-					{
-						context.Sequence.Push(String.Concat("Wiring assembly: ", wired.AssemblyName.FullName));
-						wired.PerformImmediatePhase(this, context);
-						wired.PerformWireup(this, context, asm);
-					}
-					finally
-					{
-						context.Sequence.EndScope();
-					}
+					FirstWireupAssembly(context, wired, asm);
+				}
+				else
+				{
+					SubsequentWireupAssembly(context, concurrent, asm);
 				}
 				return concurrent;
 			}
 			return wired;
+		}
+
+		private void SubsequentWireupAssembly(WireupContext context, WiredAssembly wired, Assembly asm)
+		{
+			if (wired.HasDeclarations && wired.CompletedWireupPhase == null || wired.CompletedWireupPhase < WireupPhase.AfterWireup)
+			{
+				context.Sequence.BeginScope();
+				try
+				{
+					context.Sequence.Push(String.Concat("Completing wireup of assembly: ", wired.AssemblyName.FullName));
+					wired.PerformImmediatePhase(this, context);
+					wired.PerformWireup(this, context, asm);
+				}
+				finally
+				{
+					context.Sequence.EndScope();
+				}
+			}
+		}
+
+		private void FirstWireupAssembly(WireupContext context, WiredAssembly wired, Assembly asm)
+		{
+			if (!wired.HasDeclarations)
+			{
+				context.Sequence.Push(String.Concat("Assembly does not make wireup declarations: ", wired.AssemblyName.FullName));
+			}
+			else
+			{
+				context.Sequence.BeginScope();
+				try
+				{
+					context.Sequence.Push(String.Concat("Wiring assembly: ", wired.AssemblyName.FullName));
+					wired.PerformImmediatePhase(this, context);
+					wired.PerformWireup(this, context, asm);
+				}
+				finally
+				{
+					context.Sequence.EndScope();
+				}
+			}
 		}
 
 		WiredType PerformWireupDependencies(WireupContext context, Type type)

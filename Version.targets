@@ -6,6 +6,6 @@
   <PropertyGroup>
     <VersionMajor>3</VersionMajor>
     <VersionMinor>0</VersionMinor>
-    <VersionBuild>0</VersionBuild>
+    <VersionBuild>1</VersionBuild>
   </PropertyGroup>
 </Project>
