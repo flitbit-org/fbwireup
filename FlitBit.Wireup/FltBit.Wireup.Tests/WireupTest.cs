@@ -11,13 +11,16 @@ namespace FltBit.Wireup.Tests
 	[TestClass]
 	public class WireupTest
 	{
+		public TestContext TestContext { get; set; }
+
 		[TestMethod]
 		public void TestMethod1()
 		{
 			var coordinator = WireupCoordinator.SelfConfigure();
 			Assert.IsNotNull(coordinator);
 			var report = coordinator.ReportWireupHistory();
-			Assert.IsNotNull(report);
+			TestContext.WriteLine("---------- Wireup Report ----------");
+			TestContext.WriteLine(report);
 		}
 	}
 }

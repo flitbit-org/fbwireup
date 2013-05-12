@@ -95,10 +95,12 @@ namespace FlitBit.Wireup
 				foreach (var r in h.Sequence.Records)
 				{
 					buffer.Append(Environment.NewLine)
+								.Append("Thread: ")
 								.Append(r.ThreadId)
-								.Append(" ")
-								.Append(new string('\t', r.Depth))
-								.Append(r.Details);
+								.Append("; ");
+					if (r.Depth > 0)
+						buffer.Append(new string('\t', r.Depth));
+					buffer.Append(r.Details);
 				}
 			}
 			return buffer.ToString();
