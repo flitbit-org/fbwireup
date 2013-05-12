@@ -36,55 +36,16 @@ namespace FlitBit.Wireup
 				var concurrent = _assemblies.GetOrAdd(key, wired);
 				if (ReferenceEquals(wired, concurrent))
 				{
-					FirstWireupAssembly(context, wired, asm);
+					wired.FirstWireupAssembly(this, context, asm);
 				}
 				else
 				{
-					SubsequentWireupAssembly(context, concurrent, asm);
+					concurrent.SubsequentWireupAssembly(this, context, asm);
 				}
 				return concurrent;
 			}
+			wired.SubsequentWireupAssembly(this, context, asm);
 			return wired;
-		}
-
-		private void SubsequentWireupAssembly(WireupContext context, WiredAssembly wired, Assembly asm)
-		{
-			if (wired.HasDeclarations && wired.CompletedWireupPhase == null || wired.CompletedWireupPhase < WireupPhase.AfterWireup)
-			{
-				context.Sequence.BeginScope();
-				try
-				{
-					context.Sequence.Push(String.Concat("Completing wireup of assembly: ", wired.AssemblyName.FullName));
-					wired.PerformImmediatePhase(this, context);
-					wired.PerformWireup(this, context, asm);
-				}
-				finally
-				{
-					context.Sequence.EndScope();
-				}
-			}
-		}
-
-		private void FirstWireupAssembly(WireupContext context, WiredAssembly wired, Assembly asm)
-		{
-			if (!wired.HasDeclarations)
-			{
-				context.Sequence.Push(String.Concat("Assembly does not make wireup declarations: ", wired.AssemblyName.FullName));
-			}
-			else
-			{
-				context.Sequence.BeginScope();
-				try
-				{
-					context.Sequence.Push(String.Concat("Wiring assembly: ", wired.AssemblyName.FullName));
-					wired.PerformImmediatePhase(this, context);
-					wired.PerformWireup(this, context, asm);
-				}
-				finally
-				{
-					context.Sequence.EndScope();
-				}
-			}
 		}
 
 		WiredType PerformWireupDependencies(WireupContext context, Type type)
@@ -187,5 +148,28 @@ namespace FlitBit.Wireup
 		}
 
 		#endregion
+
+
+		public void NotifyTaskObservers(WireupContext context, Meta.WireupTaskAttribute task, Type targetType)
+		{
+			if (_observers.Any())
+			{
+				var targetDesc = (targetType != null) ? targetType.GetReadableFullName() : (string) null;
+				context.Sequence.Push(String.Concat("Notifying wireup observers that the task:target pair is being executed: ", task.GetType().GetReadableFullName(), ":", targetDesc));
+				context.Sequence.BeginScope();
+				try
+				{
+					foreach (var o in _observers.Values)
+					{
+						context.Sequence.Push(String.Concat("Notifying wireup observer: ", o.GetType().GetReadableFullName()));
+						o.NotifyWireupTask(this, task, targetType);
+					}
+				}
+				finally
+				{
+					context.Sequence.EndScope();
+				}
+			}
+		}
 	}
 }

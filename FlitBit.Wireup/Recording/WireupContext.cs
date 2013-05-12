@@ -8,7 +8,6 @@ using System.Reflection;
 using System.Threading;
 using FlitBit.Core;
 using FlitBit.Core.Parallel;
-using FlitBit.Wireup.Meta;
 using FlitBit.Wireup.Properties;
 
 namespace FlitBit.Wireup.Recording
@@ -129,14 +128,8 @@ namespace FlitBit.Wireup.Recording
 			Contract.Requires<InvalidOperationException>(IsInitialized);
 			Contract.Requires<ArgumentNullException>(type != null);
 
-			// Types may have dependencies declared; wire them first.
-			foreach (WireupDependencyAttribute d in type.GetCustomAttributes(typeof(WireupDependencyAttribute), false))
-			{
-				var r = d.TargetType;
-				coordinator.WireupDependencies(this, r.Assembly);
-			}
-			var wiredAsm = WireupDependency(coordinator, type.Assembly);
-			return wiredAsm.PerformWireupType(coordinator, this, type);
+			var asm = WireupDependency(coordinator, type.Assembly);
+			return asm.PerformWireupType(coordinator, this, type);
 		}
 
 		internal WiredAssembly WireupDependency(IWireupCoordinator coordinator, Assembly asm)
@@ -147,15 +140,19 @@ namespace FlitBit.Wireup.Recording
 			Tuple<int, WiredAssembly> wired;
 			if (!_assemblies.TryGetValue(key, out wired))
 			{
-				Sequence.Push(String.Concat("Wiring dependency: ", asm.FullName));
+				if (asm.FullName != _initiator.FullName)
+				{
+					Sequence.Push(String.Concat("Wiring dependency: ", asm.FullName));
+				}
 				wired = Tuple.Create(_assemblies.Count, coordinator.WireupDependencies(this, asm));
 				var final = _assemblies.GetOrAdd(key, wired);
-				if (!ReferenceEquals(final, wired))
+				if (!ReferenceEquals(final, wired) && asm.FullName != _initiator.FullName)
 				{
 					Sequence.Push(String.Concat("Dependency already wired: ", asm.FullName));
 				}
 				return final.Item2;
 			}
+			wired.Item2.SubsequentWireupAssembly(coordinator, this, asm);
 			return wired.Item2;
 		}
 

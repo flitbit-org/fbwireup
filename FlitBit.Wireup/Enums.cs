@@ -30,43 +30,48 @@ namespace FlitBit.Wireup
 	public enum WireupPhase
 	{
 		/// <summary>
+		/// Initial phase (none).
+		/// </summary>
+		Initial = 0,
+
+		/// <summary>
 		///   Immediately upon discovery.
 		/// </summary>
-		Immediate = -6,
+		Immediate = 1,
 
 		/// <summary>
 		///   Indicates before dependencies are resolved.
 		/// </summary>
-		BeforeDependencies = -5,
+		BeforeDependencies = 2,
 
 		/// <summary>
 		///   Indicates as dependencies are resolved.
 		/// </summary>
-		Dependencies = -4,
+		Dependencies = 3,
 
 		/// <summary>
 		///   Indicates before tasks are executed.
 		/// </summary>
-		BeforeTasks = -3,
+		BeforeTasks = 4,
 
 		/// <summary>
 		///   Indicates as tasks are executed.
 		/// </summary>
-		Tasks = -2,
+		Tasks = 5,
 
 		/// <summary>
 		///   Indicates before wireup.
 		/// </summary>
-		BeforeWireup = -1,
+		BeforeWireup = 6,
 
 		/// <summary>
 		///   Default; indicates during the wireup phase.
 		/// </summary>
-		Wireup = 0,
+		Wireup = 7,
 
 		/// <summary>
 		///   Indicates after wireup.
 		/// </summary>
-		AfterWireup = 1
+		AfterWireup = 8
 	}
 }

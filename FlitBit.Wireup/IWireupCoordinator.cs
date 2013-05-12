@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Reflection;
 using FlitBit.Wireup.CodeContracts;
+using FlitBit.Wireup.Meta;
 using FlitBit.Wireup.Recording;
 
 namespace FlitBit.Wireup
@@ -63,6 +64,15 @@ namespace FlitBit.Wireup
 		/// <param name="context">the context</param>
 		/// <param name="type">the type</param>
 		WiredType WireupDependency(WireupContext context, Type type);
+
+		/// <summary>
+		/// Notifies the wireup coordinator and observers when a task is performed.
+		/// </summary>
+		/// <param name="context"></param>
+		/// <param name="task"></param>
+		/// <param name="targetType"></param>
+		void NotifyTaskObservers(WireupContext context, 
+			WireupTaskAttribute task, Type targetType);
 	}
 
 	namespace CodeContracts
@@ -145,6 +155,15 @@ namespace FlitBit.Wireup
 			public IEnumerable<WireupContext> ContextHistory { get { throw new NotImplementedException(); } }
 
 			#endregion
+
+
+			public void NotifyTaskObservers(WireupContext context, WireupTaskAttribute task, Type targetType)
+			{
+				Contract.Requires<ArgumentNullException>(context != null);
+				Contract.Requires<ArgumentNullException>(task != null);
+
+				throw new NotImplementedException();
+			}
 		}
 	}
 }

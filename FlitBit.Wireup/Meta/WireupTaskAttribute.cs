@@ -43,7 +43,7 @@ namespace FlitBit.Wireup.Meta
 		///   Called by the base class upon execution. Derived classes should
 		///   provide an implementation that performs the wireup logic.
 		/// </summary>
-		protected abstract void PerformTask(IWireupCoordinator coordinator);
+		protected abstract void PerformTask(IWireupCoordinator coordinator, WireupContext context);
 
 		/// <summary>
 		///   Called by the framework to execute the task.
@@ -55,7 +55,7 @@ namespace FlitBit.Wireup.Meta
 
 			context.WireupDependency(coordinator, this.GetType()
 																								.Assembly);
-			PerformTask(coordinator);
+			PerformTask(coordinator, context);
 		}
 	}
 }

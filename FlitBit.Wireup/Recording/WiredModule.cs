@@ -41,7 +41,7 @@ namespace FlitBit.Wireup.Recording
 																.ToArray();
 			this.Tasks = module.GetCustomAttributes(typeof(WireupTaskAttribute), false)
 												.Cast<WireupTaskAttribute>()
-												.Select(task => new WiredTask(this, task))
+												.Select(task => new WiredTask(this, task, null))
 												.ToArray();
 		}
 

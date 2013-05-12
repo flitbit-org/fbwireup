@@ -59,7 +59,12 @@ namespace FlitBit.Wireup.Recording
 			}
 		}
 
-		internal void Push(string description)
+		/// <summary>
+		/// Pushes processing notes onto the sequence.
+		/// </summary>
+		/// <param name="description"></param>
+		/// <exception cref="InvalidOperationException"></exception>
+		public void Push(string description)
 		{
 			Contract.Requires<ArgumentNullException>(description != null);
 			var id = Thread.CurrentThread.ManagedThreadId;

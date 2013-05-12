@@ -54,6 +54,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SampleWireupCommand.cs" />
+    <Compile Include="SampleWireupTask.cs" />
     <Compile Include="Wireup.cs" />
     <Compile Include="WireupTest.cs" />
   </ItemGroup>

@@ -15,12 +15,15 @@ namespace FlitBit.Wireup.Recording
 		/// </summary>
 		/// <param name="where">Where the task was encountered.</param>
 		/// <param name="task">The task attribute.</param>
-		public WiredTask(WireupRecord where, WireupTaskAttribute task)
+		/// <param name="type">The task's target type (if exists; otherwise null).</param>
+		public WiredTask(WireupRecord where, WireupTaskAttribute task, Type type)
 			: base(where.Context)
 		{
 			Contract.Requires<ArgumentNullException>(where != null);
 
 			this.Phase = task.Phase;
+			this.TargetTask = task;
+			this.TargetType = type;
 
 			this.Description = task.GetType()
 														.GetReadableFullName();
@@ -30,5 +33,28 @@ namespace FlitBit.Wireup.Recording
 		///   The phase in which the task is executed.
 		/// </summary>
 		public WireupPhase Phase { get; protected set; }
+
+		/// <summary>
+		///   Special handling for the Wireup phase.
+		/// </summary>
+		/// <param name="coordinator"></param>
+		/// <param name="context"></param>
+		protected override void OnWireup(IWireupCoordinator coordinator, WireupContext context)
+		{
+			context.Sequence.Push(String.Concat("Executing ", this.Description));
+			coordinator.NotifyTaskObservers(context, TargetTask, TargetType);
+			TargetTask.ExecuteTask(coordinator, context);
+			base.OnWireup(coordinator, context);
+		}
+
+		/// <summary>
+		/// The task.
+		/// </summary>
+		public WireupTaskAttribute TargetTask { get; private set; }
+
+		/// <summary>
+		/// The type on which the task is declared.
+		/// </summary>
+		public Type TargetType { get; private set; }
 	}
 }

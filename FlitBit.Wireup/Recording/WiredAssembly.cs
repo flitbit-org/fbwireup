@@ -53,7 +53,7 @@ namespace FlitBit.Wireup.Recording
 															.ToArray();
 				this.Tasks = asm.GetCustomAttributes(typeof(WireupTaskAttribute), false)
 												.Cast<WireupTaskAttribute>()
-												.Select(task => new WiredTask(this, task))
+												.Select(task => new WiredTask(this, task, null))
 												.ToArray();
 			}
 		}
@@ -121,7 +121,9 @@ namespace FlitBit.Wireup.Recording
 					var mod = new WiredModule(context, this, module);
 					if (_modules.TryAdd(mod.FullyQualifiedName, mod))
 					{
+						mod.PerformImmediatePhase(coordinator, context);
 						mod.WireupTypes(coordinator, context, module);
+
 					}
 				}
 			}

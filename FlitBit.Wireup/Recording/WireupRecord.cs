@@ -14,6 +14,7 @@ namespace FlitBit.Wireup.Recording
 	public abstract class WireupRecord
 	{
 		readonly List<WireupErrorRecord> _errors = new List<WireupErrorRecord>();
+		WireupPhase _processingPhase;
 
 		/// <summary>
 		///   Event fired when a wireup phase is executing.
@@ -34,7 +35,7 @@ namespace FlitBit.Wireup.Recording
 		/// <summary>
 		///   Indicates the completed wireup phases.
 		/// </summary>
-		public WireupPhase? CompletedWireupPhase { get; private set; }
+		public WireupPhase CompletedWireupPhase { get; private set; }
 
 		/// <summary>
 		///   Gets the context upon which the wireup was recorded.
@@ -59,7 +60,7 @@ namespace FlitBit.Wireup.Recording
 		/// <summary>
 		///   Indicates whether wireup has completed.
 		/// </summary>
-		public bool IsWireupComplete { get { return CompletedWireupPhase.HasValue && CompletedWireupPhase == WireupPhase.AfterWireup; } }
+		public bool IsWireupComplete { get { return CompletedWireupPhase == WireupPhase.AfterWireup; } }
 
 		/// <summary>
 		///   Gets the item's dependent tasks.
@@ -137,8 +138,8 @@ namespace FlitBit.Wireup.Recording
 		protected bool PerformWireupPhase(WireupPhase phase)
 		{
 			// perform the wireup phase if we have not previously attempted that phase...
-			return (!CompletedWireupPhase.HasValue) || (phase > CompletedWireupPhase
-				&& _errors.All(r => r.Phase != phase));
+			return (phase > CompletedWireupPhase && CompletedWireupPhase == _processingPhase) 
+				&& _errors.All(r => r.Phase != phase);
 		}
 
 		internal void PerformImmediatePhase(IWireupCoordinator coordinator, WireupContext context)
@@ -157,16 +158,17 @@ namespace FlitBit.Wireup.Recording
 		{
 			if (PerformWireupPhase(phase))
 			{
-				context.Sequence.Push(String.Concat(phase, " phase for ", Description));
-				context.Sequence.BeginScope();
+				_processingPhase = phase;
 				try
 				{
+					context.Sequence.Push(String.Concat(phase, " phase for ", Description));
+					context.Sequence.BeginScope();
 					var deps = this.Dependencies;
 					if (deps != null)
 					{
 						foreach (var dep in deps.Where(d => d.Phase == phase))
 						{
-							dep.PerformWireup(coordinator, context);
+							dep.PerformWireupPhases(coordinator, context);
 						}
 					}
 					var tasks = this.Tasks;
@@ -174,7 +176,7 @@ namespace FlitBit.Wireup.Recording
 					{
 						foreach (var task in tasks.Where(t => t.Phase == phase))
 						{
-							task.PerformWireupPhase(coordinator, context, phase);
+							task.PerformWireupPhases(coordinator, context);
 						}
 					}
 
