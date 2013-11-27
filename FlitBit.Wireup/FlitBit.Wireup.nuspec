@@ -6,11 +6,11 @@
     <title>$title$</title>
     <authors>Phillip Clark</authors>
     <owners>flitbit.org</owners>
-    <licenseUrl>http://fbwire.codeplex.com/license</licenseUrl>
-    <projectUrl>http://fbwire.codeplex.com/</projectUrl>
+    <licenseUrl>https://raw.github.com/flitbit-org/fbwireup/master/LICENSE</licenseUrl>
+    <projectUrl>https://github.com/flitbit-org/fbwireup</projectUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>$description$</description>
-    <releaseNotes>Re-signed assembly.</releaseNotes>
+    <releaseNotes>Moved project home to github.</releaseNotes>
     <copyright>Copyright 2013</copyright>
   </metadata>
 </package>

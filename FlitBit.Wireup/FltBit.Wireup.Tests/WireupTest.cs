@@ -14,7 +14,7 @@ namespace FltBit.Wireup.Tests
 		public TestContext TestContext { get; set; }
 
 		[TestMethod]
-		public void TestMethod1()
+		public void WireupAndPrintReport()
 		{
 			var coordinator = WireupCoordinator.SelfConfigure();
 			Assert.IsNotNull(coordinator);
