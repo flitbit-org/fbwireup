@@ -9,6 +9,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FltBit.Wireup.Tests", "Flit
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{688ECAA9-6671-44CB-8F11-6D3BA3FB32B1}"
 	ProjectSection(SolutionItems) = preProject
+		README.md = README.md
 		Version.targets = Version.targets
 	EndProjectSection
 EndProject

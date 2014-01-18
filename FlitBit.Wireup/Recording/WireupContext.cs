@@ -1,23 +1,135 @@
-﻿using System;
+﻿using FlitBit.Core;
+using FlitBit.Core.Log;
+using FlitBit.Core.Parallel;
+using FlitBit.Wireup.Properties;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Reflection;
 using System.Threading;
-using FlitBit.Core;
-using FlitBit.Core.Parallel;
-using FlitBit.Wireup.Properties;
 
 namespace FlitBit.Wireup.Recording
 {
 	/// <summary>
 	///   Collects and carries context information related to an operation against wireup.
 	/// </summary>
-	public class WireupContext : Disposable, IParallelShared
+	public class WireupContext : Disposable
 	{
+    static readonly ILogSink LogSink = typeof(WireupContext).GetLogSink();
 		static int __idSeed;
+
+    internal class WireupContextFlowProvider : IContextFlowProvider
+    {
+      static readonly Lazy<WireupContextFlowProvider> Provider =
+        new Lazy<WireupContextFlowProvider>(CreateAndRegisterContextFlowProvider, LazyThreadSafetyMode.ExecutionAndPublication);
+
+      static WireupContextFlowProvider CreateAndRegisterContextFlowProvider()
+      {
+        var res = new WireupContextFlowProvider();
+        ContextFlow.RegisterProvider(res);
+        return res;
+      }
+
+      [ThreadStatic]
+      static Stack<WireupContext> __scopes;
+
+      public WireupContextFlowProvider()
+      {
+        this.ContextKey = Guid.NewGuid();
+      }
+
+      public Guid ContextKey
+      {
+        get;
+        private set;
+      }
+
+      public object Capture()
+      {
+        var top = Peek();
+        if (top != null)
+        {
+          return top.ParallelShare();
+        }
+        return null;
+      }
+
+      public void Attach(ContextFlow context, object captureKey)
+      {
+        var scope = (captureKey as WireupContext);
+        if (scope != null)
+        {
+          if (__scopes == null)
+          {
+            __scopes = new Stack<WireupContext>();
+          }
+          if (__scopes.Count > 0)
+          {
+            ReportAndClearOrphanedScopes(__scopes);
+          }
+          __scopes.Push(scope);
+        }
+      }
+
+      private void ReportAndClearOrphanedScopes(Stack<WireupContext> scopes)
+      {
+        scopes.Clear();
+      }
+
+      public void Detach(ContextFlow context, object captureKey)
+      {
+        var scope = (captureKey as WireupContext);
+        if (scope != null)
+        {
+          scope.Dispose();
+        }
+      }
+
+      internal static void Push(WireupContext scope)
+      {
+        var dummy = Provider.Value;
+        if (__scopes == null)
+        {
+          __scopes = new Stack<WireupContext>();
+        }
+        __scopes.Push(scope);
+      }
+
+      internal static bool TryPop(WireupContext scope)
+      {
+        if (__scopes != null && __scopes.Count > 0)
+        {
+          if (ReferenceEquals(__scopes.Peek(), scope))
+          {
+            __scopes.Pop();
+            return true;
+          }
+        }
+        return false;
+      }
+
+      internal static WireupContext Pop()
+      {
+        if (__scopes != null && __scopes.Count > 0)
+        {
+          return __scopes.Pop();
+        }
+        return default(WireupContext);
+      }
+
+
+      internal static WireupContext Peek()
+      {
+        if (__scopes != null && __scopes.Count > 0)
+        {
+          return __scopes.Peek();
+        }
+        return default(WireupContext);
+      }
+    }
+
 
 		readonly ConcurrentDictionary<object, Tuple<int, WiredAssembly>> _assemblies =
 			new ConcurrentDictionary<object, Tuple<int, WiredAssembly>>();
@@ -34,7 +146,7 @@ namespace FlitBit.Wireup.Recording
 		{
 			this.ID = Interlocked.Increment(ref __idSeed);
 			Interlocked.Increment(ref _disposers);
-			ContextFlow.Push(this);
+			WireupContextFlowProvider.Push(this);
 			Sequence = new WireupProcessingSequence();
 		}
 
@@ -78,7 +190,7 @@ namespace FlitBit.Wireup.Recording
 			{
 				return false;
 			}
-			if (disposing && !ContextFlow.TryPop(this))
+			if (disposing && !WireupContextFlowProvider.TryPop(this))
 			{
 				// Notify the caller that they are calling dispose out of order.
 				// This never happens if the caller uses a 'using' 
@@ -86,11 +198,9 @@ namespace FlitBit.Wireup.Recording
 					"WireupContext disposed out of order. To eliminate this possibility always wrap its use in a `using` clause.";
 				try
 				{
-					LogSink.OnTraceEvent(this, TraceEventType.Warning, message);
+          LogSink.Warning(message);
 				}
-					// ReSharper disable EmptyGeneralCatchClause
 				catch
-					// ReSharper restore EmptyGeneralCatchClause
 				{
 					/* safety net, intentionally eat the since we might be in GC thread */
 				}
@@ -156,17 +266,7 @@ namespace FlitBit.Wireup.Recording
 			return wired.Item2;
 		}
 
-		#region IParallelShared Members
-
-		/// <summary>
-		///   Prepares the instance for sharing across threads.
-		///   This call should be wrapped in a 'using clause' to
-		///   ensure proper cleanup of both the shared and the original.
-		/// </summary>
-		/// <returns>
-		///   An equivalent instance.
-		/// </returns>
-		public object ParallelShare()
+		WireupContext ParallelShare()
 		{
 			if (!IsInitialized)
 			{
@@ -181,8 +281,6 @@ namespace FlitBit.Wireup.Recording
 			return this;
 		}
 
-		#endregion
-
 		/// <summary>
 		///   Gets the current "ambient" wireup context.
 		/// </summary>
@@ -190,8 +288,7 @@ namespace FlitBit.Wireup.Recording
 		{
 			get
 			{
-				WireupContext ambient;
-				return (ContextFlow.TryPeek(out ambient)) ? ambient : default(WireupContext);
+			  return WireupContextFlowProvider.Peek();
 			}
 		}
 
@@ -201,10 +298,10 @@ namespace FlitBit.Wireup.Recording
 		/// <returns>a context</returns>
 		public static WireupContext NewOrShared(IWireupCoordinator coordinator, Action<WireupContext> init)
 		{
-			WireupContext ambient;
-			if (ContextFlow.TryPeek(out ambient))
+		  var ambient = WireupContextFlowProvider.Peek();
+      if (ambient != null)
 			{
-				return (WireupContext) ambient.ParallelShare();
+				return ambient.ParallelShare();
 			}
 			ambient = new WireupContext();
 			if (init != null)
