@@ -58,17 +58,20 @@ namespace FlitBit.Wireup
 					(sender, e) =>
 					{
 						var asm = e.LoadedAssembly;
-						context.Sequence.Push(String.Concat("AssemblyLoad event assembly: ", asm.FullName));
+					  using (var cx = WireupContext.NewOrShared(coordinator, c => c.InitialAssembly(coordinator, asm)))
+					  {
+					    cx.Sequence.Push(String.Concat("AssemblyLoad event assembly: ", asm.FullName));
 
-						if (config.IsIgnored(e.LoadedAssembly))
-						{
-							context.Sequence.Push(String.Concat("... ignoring ", asm.FullName));
-						}
-						else
-						{
-							context.Sequence.Push(String.Concat("... wiring ", asm.FullName));
-							coordinator.NotifyAssemblyLoaded(e.LoadedAssembly);
-						}
+					    if (config.IsIgnored(e.LoadedAssembly))
+					    {
+					      cx.Sequence.Push(String.Concat("... ignoring ", asm.FullName));
+					    }
+					    else
+					    {
+					      cx.Sequence.Push(String.Concat("... wiring ", asm.FullName));
+					      coordinator.NotifyAssemblyLoaded(e.LoadedAssembly);
+					    }
+					  }
 					};
 			}
 		}
