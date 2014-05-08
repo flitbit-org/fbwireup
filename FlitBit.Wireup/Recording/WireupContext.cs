@@ -1,4 +1,8 @@
-﻿using FlitBit.Core;
+﻿#region COPYRIGHT© 2009-2014 Phillip Clark. All rights reserved.
+// For licensing information see License.txt (MIT style licensing).
+#endregion
+
+using FlitBit.Core;
 using FlitBit.Core.Log;
 using FlitBit.Core.Parallel;
 using FlitBit.Wireup.Properties;
