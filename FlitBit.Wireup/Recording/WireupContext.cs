@@ -60,9 +60,9 @@ namespace FlitBit.Wireup.Recording
         return null;
       }
 
-      public void Attach(ContextFlow context, object captureKey)
+      public object Attach(ContextFlow context, object capture)
       {
-        var scope = (captureKey as WireupContext);
+        var scope = (capture as WireupContext);
         if (scope != null)
         {
           if (__scopes == null)
@@ -75,6 +75,7 @@ namespace FlitBit.Wireup.Recording
           }
           __scopes.Push(scope);
         }
+        return scope;
       }
 
       private void ReportAndClearOrphanedScopes(Stack<WireupContext> scopes)
@@ -82,9 +83,9 @@ namespace FlitBit.Wireup.Recording
         scopes.Clear();
       }
 
-      public void Detach(ContextFlow context, object captureKey)
+      public void Detach(ContextFlow context, object attachment, Exception err)
       {
-        var scope = (captureKey as WireupContext);
+        var scope = (attachment as WireupContext);
         if (scope != null)
         {
           scope.Dispose();
